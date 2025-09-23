@@ -94,6 +94,27 @@ Directly output the generated markdown content, do not add any additional text, 
 Follow the original format of the template as closely as possible, and fill in the answers into the appropriate sections.
 """
 
+# Generate a single section for one question/answer pair, formatted per RFP style
+GENERATE_SECTION_PROMPT = """
+You are an expert analyst.
+Given one RFP question and its answer, write the corresponding markdown section content that fits naturally into the RFP response.
+
+Constraints:
+- Use concise, professional tone.
+- Follow typical RFP structure (heading then content). If the question itself is long, abbreviate it into a short heading.
+- Do not include unrelated template sections.
+- Keep the section self-contained and avoid repeating prior sections.
+
+<question>
+{question}
+</question>
+
+<answer>
+{answer}
+</answer>
+
+Output only markdown for this section.
+"""
 
 class OutputQuestions(BaseModel):
     questions: List[str]
@@ -147,7 +168,7 @@ async def run_workflow(
     wf_dir = work_dir / "workflow_output"
 
     # Models
-    llm: LLM = Gemini(model="gemini-2.5-flash", timeout=600)
+    llm: LLM = Gemini(model="gemini-2.5-flash", timeout=600, max_output_tokens=8192)
     embed_model = FastEmbedEmbedding(model_name="BAAI/bge-small-en-v1.5")
     parser = LlamaParse(
         parse_mode="parse_page_with_agent",
@@ -365,15 +386,29 @@ async def run_workflow(
 
     combined_answers = "\n".join([json.dumps(a) for a in answers])
 
-    # Generate output
-    output_template_text = "\n".join([doc.get_content("none") for doc in rfp_docs])
-    gen_prompt = PromptTemplate(GENERATE_OUTPUT_PROMPT)
-    stream = await llm.astream(gen_prompt, output_template=output_template_text, answers=combined_answers)
-    final_output = ""
-    async for chunk in stream:
-        final_output += chunk
+    # Generate output in small sections to avoid token limits
+    q_to_a: Dict[str, str] = {a.get("question", ""): a.get("answer", "") for a in answers}
+    section_md_list: List[str] = []
+    sec_prompt = PromptTemplate(GENERATE_SECTION_PROMPT)
+    if progress_cb:
+        progress_cb({"phase": "generating_sections_start", "total": len(output_qs)})
+    for sidx, q in enumerate(output_qs):
+        a_text = q_to_a.get(q, "")
+        if not a_text:
+            sec_md = f"\n\n### {q[:80]}\n_TBD: No answer available._\n"
+        else:
+            try:
+                sec_stream = await llm.astream(sec_prompt, question=q, answer=a_text)
+                sec_md = ""
+                async for chunk in sec_stream:
+                    sec_md += chunk
+            except Exception:
+                sec_md = f"\n\n### {q[:80]}\n{a_text}\n"
+        section_md_list.append(sec_md)
         if progress_cb:
-            progress_cb({"phase": "generating_output", "chars": len(final_output)})
+            progress_cb({"phase": "generating_sections_progress", "current": sidx + 1, "total": len(output_qs)})
+
+    final_output = "\n\n".join(section_md_list)
 
     # Save outputs
     with open(wf_dir / "final_output.md", "w", encoding="utf-8") as f:
