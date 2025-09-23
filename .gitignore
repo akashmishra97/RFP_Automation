@@ -1,0 +1,24 @@
+# Virtual env
+.venv/
+
+# Python cache
+__pycache__/
+*.pyc
+
+# OS / editor
+.DS_Store
+*.swp
+.ipynb_checkpoints/
+
+# Local config
+.env
+
+# Generated workflow artifacts and data
+/data/
+/data_ui/
+/data_out_rfp/
+/data_out_rfp_ui/
+/storage_chroma_rfp/
+
+# Generated visuals
+rfp_workflow.html

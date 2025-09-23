@@ -1,0 +1,31 @@
+# Core LLM + Gemini SDK
+google-generativeai>=0.7.0
+
+# LlamaIndex core (compatible with code in repo)
+llama-index>=0.13.0,<0.14.0
+
+# LlamaIndex Gemini LLM adapter
+llama-index-llms-gemini
+
+# FastEmbed for local embeddings (reliable and lightweight)
+llama-index-embeddings-fastembed
+fastembed
+
+# LlamaParse client (for Llama Cloud parsing)
+llama-cloud-services
+
+# Chroma vector store integration + backend
+llama-index-vector-stores-chroma
+chromadb
+ 
+# Load env vars from .env
+python-dotenv>=1.0.1
+
+# Workflow visualization used by code
+llama-index-utils-workflow
+
+# Optional: Jupyter if you want to run notebook-like cells locally
+jupyter
+
+# Streamlit UI
+streamlit
