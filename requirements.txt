@@ -29,3 +29,6 @@ jupyter
 
 # Streamlit UI
 streamlit
+ 
+# Ensure Pydantic v2 for structured prediction compatibility
+pydantic>=2,<3

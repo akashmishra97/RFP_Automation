@@ -43,7 +43,7 @@ Outputs are saved under `data_out_rfp_ui/workflow_output/`:
 - `final_output.md` — final generated response
 
 ## Script (notebook-style) version
-See `RFP_Automation/copy_of_generate_rfp.py`. This uses notebook magics and async awaits and is best run in a notebook environment.
+Use `RFP_Automation/app/chat_rfp.py` for the interactive RFP chatbot.
 
 ## Notes
 - Free-tier rate limits may cause 429s. The UI paces requests and will resume from where it left off.

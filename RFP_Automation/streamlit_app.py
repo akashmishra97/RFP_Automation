@@ -25,6 +25,15 @@ from llama_index.core.agent import FunctionAgent
 from llama_index.core.schema import TextNode
 from llama_index.core.prompts import PromptTemplate
 from pydantic import BaseModel
+try:
+    from RFP_Automation.app.workflow import run_workflow as run_workflow_mod
+except ModuleNotFoundError:
+    import sys as _sys
+    from pathlib import Path as _Path
+    _repo_root = str(_Path(__file__).resolve().parents[1])
+    if _repo_root not in _sys.path:
+        _sys.path.insert(0, _repo_root)
+    from RFP_Automation.app.workflow import run_workflow as run_workflow_mod
 
 
 # ---------------------------
@@ -155,7 +164,7 @@ def build_retrieval_tools(index: VectorStoreIndex, files: List[str], summaries: 
     return tools
 
 
-async def run_workflow(
+async def run_workflow_legacy(
     rfp_pdf_path: str,
     context_pdf_paths: List[str],
     work_dir: Path,
@@ -502,7 +511,7 @@ if st.button("Generate Response", type="primary"):
         try:
             # Keep RPM under free-tier limit and optionally cap questions per run
             result = asyncio.run(
-                run_workflow(
+                run_workflow_mod(
                     rfp_path,
                     context_paths,
                     work_dir,
